@@ -1,6 +1,9 @@
 import cv2
 import mediapipe as mp
 
+from gesture_controller import GestureController
+
+
 def draw_hand(preview, detector):
     #OpenCV的颜色顺序是BGR，MediaPipe接收RGB。
     rgb_frame = cv2.cvtColor(preview, cv2.COLOR_BGR2RGB)
@@ -28,7 +31,11 @@ def draw_hand(preview, detector):
     cv2.putText(preview, "Hand detected", (15, 35),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 220, 0), 2)
     
+    return palm_x, palm_y
+
+
 def main(detector):
+    controller = GestureController()
     camera = cv2.VideoCapture(0) #0表示默认摄像头
     try:
         if not camera.isOpened():
@@ -43,7 +50,11 @@ def main(detector):
                 break
 
             preview = cv2.flip(frame, 1) #水平镜像
-            draw_hand(preview, detector)
+            palm = draw_hand(preview, detector)
+            controller.update(palm)
+            direction = controller.get_direction()
+            if direction is not None:
+                print('方向:', direction, flush=True)
             cv2.imshow("Camera Preview", preview)
 
             key = cv2.waitKey(1) & 0xFF
